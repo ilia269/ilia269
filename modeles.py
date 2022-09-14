@@ -1,5 +1,5 @@
 from tensor import Tensor, Parameter
-from math import sqrt, exp
+from math import sqrt
 import numpy as np
 from hooks import SigmoidBackwardHook
 
@@ -52,14 +52,15 @@ class Sigmoid(Module):
         super().__init__()
 
     def forward(self, x: Tensor):
-        res = Tensor(data=[self.activation(x) for x in x.data])
+        res = Tensor(data=self.activation(x))
         backward_hook = SigmoidBackwardHook(tensors=[x])
         res.backward_hook = backward_hook
         return res
 
     @staticmethod
     def activation(x):
-        return 1 / (1 + exp(-x))
+        one = np.ones(shape=x.data.shape)
+        return one / (one + np.exp((-1.0)*x.data))
 
 
 class ReLU(Module):

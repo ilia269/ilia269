@@ -1,6 +1,3 @@
-from datetime import date
-import torch
-import numpy as np
 from hooks import *
 import copy
 
@@ -21,8 +18,6 @@ class Tensor:
 
         res = Tensor(data=new_data)
         res.backward_hook = backward_hook
-        # if self.backward_hook is None:
-        #     res.backward_hook = backward_hook
 
         return res
 
@@ -33,8 +28,6 @@ class Tensor:
 
             res = Tensor(data=new_data)
             res.backward_hook = backward_hook
-            # if self.backward_hook is None:
-            #     res.backward_hook = backward_hook
             return res
 
         if np.shape(self.data) != np.shape(other.data):
@@ -45,18 +38,10 @@ class Tensor:
 
         res = Tensor(data=new_data)
         res.backward_hook = backward_hook
-        # if self.backward_hook is None:
-        #     res.backward_hook = backward_hook
 
         return res
 
     def __pow__(self, pow_degree):
-        # new_data = np.matrix(np.array(self.data)**other)
-        # backward_hook = PowBackwardHook(tensors=[self], params=[other])
-        #
-        # res = Tensor(data=new_data)
-        # res.backward_hook = backward_hook
-
         res = self
         for _ in range(pow_degree-1):
             res *= self
@@ -70,19 +55,8 @@ class Tensor:
         res = Tensor(data=new_data)
 
         res.backward_hook = backward_hook
-        # if self.backward_hook is None:
-        #     res.backward_hook = backward_hook
 
         return res
-
-    # def dot(self, other):
-    #     new_data = self.data.dot(other.data)
-    #     backward_hook = DotBackwardHook(tensors=[self, other])
-    #
-    #     res = Tensor(data=new_data)
-    #     res.backward_hook = backward_hook
-    #
-    #     return res
 
     def transpose(self):
         new_data = copy.copy(self.data).transpose()
@@ -94,9 +68,7 @@ class Tensor:
 
         return res
 
-
     def clamp(self, min_, max_):
-        #todo clamp backward
         if min_ > max_:
             raise ValueError("min должен быть меньше max")
 
@@ -121,20 +93,13 @@ class Tensor:
         if grad is None:
             grad = Tensor(data=np.eye(self.data.shape[0], self.data.shape[1]))
 
-        # print("______________")
-        # print(self)
-        # print(grad)
-
         if self.grad is None:
             self.grad = grad
         else:
-            # print("______________")
-            # print(self.grad)
-            # print(grad)
             self.grad += grad
 
         if self.backward_hook is not None:
-            self.backward_hook.backward(grad)
+            self.backward_hook.update_gradient(grad)
 
     def __repr__(self):
         return str(self.data)
