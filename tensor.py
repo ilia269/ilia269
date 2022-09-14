@@ -21,10 +21,13 @@ class Tensor:
 
         return res
 
+    def __sub__(self, other):
+        return self + other * (-1.0)
+
     def __mul__(self, other):
         if isinstance(other, float):
             new_data = np.matrix(np.array(self.data) * other)
-            backward_hook = TensorMultBackwardHook(tensors=[self, other])
+            backward_hook = TensorMultBackwardHook(tensors=[self, Tensor([other])])
 
             res = Tensor(data=new_data)
             res.backward_hook = backward_hook
