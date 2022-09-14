@@ -3,86 +3,65 @@ import numpy as np
 from modeles import Linear, ReLU, LeakyReLU, Sequential, Sigmoid
 import torch
 from optomizer import GD
+from sklearn.datasets import make_blobs, make_moons
+import random
+from matplotlib import pyplot
 
-# _______________________
-a = Tensor(data=[[1, 1], [3, 4]]).transpose()
-b = Tensor(data=[1, 6])
-c = Tensor(data=[[3], [4]])
-x = Tensor(data=[1, 4])
-t = Tensor(data=[5, 7])
+# X, y = make_moons(400, noise=0.075)
+# X_test, y_test = make_moons(400, noise=0.075)
 
-r = np.matrix([[1], [2]])
-e = np.matrix([[3, 6]])
-
-
-l1 = Linear(2, 3)
-l2 = Linear(3, 4)
-l3 = Sigmoid()
-l4 = Linear(4, 1)
-l5 = Sigmoid()
-model = Sequential(l1, l2, l3, l4, l5)
-res = model(x)
-res.backward()
-res = model(x)
-res.backward()
-optimizer = GD(model.parameters())
-
-for _ in range(500):
-    res = model(x)
-    print(res)
-    res.backward()
-    optimizer.step()
-    optimizer.zero_grads()
+X, y = make_blobs(400, 2)
+X_test, y_test = make_blobs(400, 2)
 
 
+# l1 = Linear(2, 3)
+# l2 = Linear(3, 3)
+# l3 = Sigmoid()
+# l4 = Linear(3, 3)
+# l5 = Linear(3, 1)
+l6 = Sigmoid()
 
-# l1 = torch.nn.Linear(2, 3)
-# l2 = torch.nn.Linear(3, 4)
-# l3 = torch.nn.Sigmoid()
-# l4 = torch.nn.Linear(4, 1)
-# l5 = torch.nn.Sigmoid()
-# model = torch.nn.Sequential(l1, l2, l3, l4, l5)
-#
-# x = torch.Tensor([1, 4])
-#
-# res = model(x)
-# optimizer = torch.optim.SGD([x], lr=1, momentum=0.5)
-# for it in range(20):
-#     optimizer.zero_grad()  # обнуляем градиенты
-#     res = model(torch.Tensor([1, 4]))  # вычисляем значения функции
-#     res.backward()  # вычисляем градиенты
-#     optimizer.step()  # подправляем параметры
-#
-#     print(res)
+l1 = Linear(2, 1)
 
-# _______________________________________________
+sequential = Sequential(l1, l6)
+opt = GD(sequential.parameters(), 0.01)
 
-# a = Tensor(data=[[1, 1], [3, 4]]).transpose()
-# b = Tensor(data=[1, 6])
-# c = Tensor(data=[[3], [4]])
-# x = Tensor(data=[1, 4])
-# z = (x @ a + b) @ c
-#
-# for _ in range(10):
-#     z.backward()
-#     a = a + Tensor(data=[[-0.1, -0.1], [-0.1, -0.1]]) * a.grad
-#     b = b + Tensor(data=[-0.1, -0.1]) * b.grad
-#     c = c + Tensor(data=[[-0.1], [-0.1]]) * c.grad
-#     z = (x @ a**2 + b) @ c
-#     a.grad, b.grad, c.grad = Tensor([[0, 0], [0, 0]]), Tensor([0, 0]), Tensor([[0], [0]])
-#     print(z)
-# _______________________________________________________
-# x = Tensor([10])
-# b = Tensor([5])
-# t = x**2 + b
-#
-#
-# for _ in range(50):
-#     print(f"t is {t}")
-#     print(f"x is {x}\n")
-#     t.backward()
-#     x.data = (-0.01)*x.grad.data
-#     x.grad.data *= 0.0
-#     t = x**2 + b
-#     t.backward()
+dataset = list(zip(X, y))
+
+
+def get_loss():
+    res = 0
+    for x, y in zip(X_test, y_test):
+        p = sequential.predict(Tensor(x))
+        if p == y:
+            res += 1
+
+    return res / 400
+
+
+for i in range(20):
+    random.shuffle(dataset)
+
+    for x, y in dataset:
+        answer = Tensor(y) - sequential(Tensor(x))
+        res = answer @ answer.transpose()
+        res.backward()
+        opt.step()
+        opt.zero_grads()
+
+    print(f"iter is {i}   loss is {1-get_loss()}")
+
+
+red = [x for x in X if sequential.predict(Tensor([x])) == 0]
+blue = [x for x in X if sequential.predict(Tensor([x])) != 0]
+
+red1 = [x[0] for x in red]
+red2 = [x[1] for x in red]
+
+blue1 = [x[0] for x in blue]
+blue2 = [x[1] for x in blue]
+
+pyplot.plot(red1, red2, 'bo')
+pyplot.plot(blue1, blue2, 'ro')
+pyplot.show()
 
