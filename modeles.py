@@ -60,7 +60,7 @@ class Sigmoid(Module):
     @staticmethod
     def activation(x):
         one = np.ones(shape=x.data.shape)
-        return one / (one + np.exp((-1.0)*x.data))
+        return one / (one + np.exp((-1.0) * x.data))
 
 
 class ReLU(Module):
@@ -86,7 +86,7 @@ class LeakyReLU(Module):
 
     @staticmethod
     def activation(x, negative_slope=0.01):
-        res = max(0, x) + min(0, x)*negative_slope
+        res = max(0, x) + min(0, x) * negative_slope
         return res
 
 
@@ -111,3 +111,10 @@ class Sequential(Module):
             x_in = x_out
 
         return x_out
+
+    def predict(self, x, trash_hold=0.5):
+        res = float(self.forward(x).data)
+
+        if res >= trash_hold: return 1
+
+        return 0
