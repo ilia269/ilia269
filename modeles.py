@@ -1,7 +1,7 @@
 from tensor import Tensor, Parameter
 from math import sqrt
 import numpy as np
-from hooks import SigmoidBackwardHook
+from hooks import SigmoidBackwardHook, ReLUBackwardHook
 
 
 class Module:
@@ -46,6 +46,24 @@ class Linear(Module):
         if self.bias is not None: res += self.bias
         return res
 
+class Power(Module):
+    def __init__(self, in_features, power_degree):
+        super().__init__()
+        self.in_features = in_features
+        self.power_degree = power_degree
+        self.weight = Parameter(np.ones(in_features))
+
+    def reset_parameter(self):
+        self.weight.data = np.matrix(np.random.uniform(low=-1 / sqrt(self.in_features),
+                                                       high=1 / sqrt(self.in_features),
+                                                       size=self.in_features))
+
+    def forward(self, x: Tensor):
+        return self.weight * x**self.power_degree
+
+    def parameters(self):
+        return [self.weight]
+
 
 class Sigmoid(Module):
     def __init__(self):
@@ -68,12 +86,23 @@ class ReLU(Module):
         super().__init__()
 
     def forward(self, x: Tensor):
-        res = Tensor(data=[self.activation(x) for x in x.data])
+        new_data = np.array(x.data)
+        self.apply(self.activation, new_data)
+        res = Tensor(data=new_data)
+        backward_hook = ReLUBackwardHook(tensors=[x])
+        res.backward_hook = backward_hook
         return res
 
     @staticmethod
     def activation(x):
         return max(0, x)
+
+    @staticmethod
+    def apply(function, array):
+        h, w = array.shape
+        for i in range(h):
+            for j in range(w):
+                array[i][j] = function(array[i][j])
 
 
 class LeakyReLU(Module):
