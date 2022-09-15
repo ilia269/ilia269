@@ -111,9 +111,34 @@ class SigmoidBackwardHook(BackwardHook):
 
 
 class ReLUBackwardHook(BackwardHook):
-    def update_gradient(self, delta):
-        #ToDo
-        pass
+    def __init__(self, *kargs, **kwargs):
+        super().__init__(*kargs, **kwargs)
+        self.name = "Sigmoid"
+
+    def update_gradient(self, grad):
+        t = self.tensors[0]
+        back_grad = grad * self.derivative(t)
+
+        self.tensors[0].backward(back_grad)
+
+    def derivative(self, x_tensor):
+        data = np.array(x_tensor.data)
+        self.apply(self.relu_derivative, data)
+        x_tensor.data = np.matrix(data)
+        return x_tensor
+
+    @staticmethod
+    def apply(function, array):
+        h, w = array.shape
+        for i in range(h):
+            for j in range(w):
+                array[i][j] = function(array[i][j])
+
+    @staticmethod
+    def relu_derivative(t):
+        if t >= 0:
+            return 1.0
+        return 0.0
 
     def get_delta(self):
         pass
