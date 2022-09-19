@@ -1,7 +1,7 @@
 from tensor import Tensor, Parameter
 from math import sqrt
 import numpy as np
-from hooks import SigmoidBackwardHook, ReLUBackwardHook
+from hooks import SigmoidBackwardHook, ReLUBackwardHook, SinBackwardHook
 
 
 class Module:
@@ -26,6 +26,7 @@ class Linear(Module):
             self.bias = Parameter(np.ones(shape=(out_features, 1)))
         else:
             self.bias = None
+
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -39,12 +40,16 @@ class Linear(Module):
                                                          size=self.out_features))
 
     def parameters(self):
-        return [self.weight]
+        # if self.bias: return [self.weight, self.bias]
+        # return [self.weight]
+
+        return [self.weight, self.bias]
 
     def forward(self, x: Tensor):
         res = x @ self.weight.transpose()
         if self.bias is not None: res += self.bias
         return res
+
 
 class Power(Module):
     def __init__(self, in_features, power_degree):
@@ -71,7 +76,7 @@ class Sigmoid(Module):
 
     def forward(self, x: Tensor):
         res = Tensor(data=self.activation(x))
-        backward_hook = SigmoidBackwardHook(tensors=[x])
+        backward_hook = SigmoidBackwardHook(tensors=[x, res])
         res.backward_hook = backward_hook
         return res
 
@@ -79,6 +84,21 @@ class Sigmoid(Module):
     def activation(x):
         one = np.ones(shape=x.data.shape)
         return one / (one + np.exp((-1.0) * x.data))
+
+
+class Sin(Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x: Tensor):
+        res = Tensor(data=self.activation(x))
+        backward_hook = SinBackwardHook(tensors=[x, res])
+        res.backward_hook = backward_hook
+        return res
+
+    @staticmethod
+    def activation(x):
+        return np.sin(x.data)
 
 
 class ReLU(Module):
@@ -89,7 +109,7 @@ class ReLU(Module):
         new_data = np.array(x.data)
         self.apply(self.activation, new_data)
         res = Tensor(data=new_data)
-        backward_hook = ReLUBackwardHook(tensors=[x])
+        backward_hook = ReLUBackwardHook(tensors=[x, res])
         res.backward_hook = backward_hook
         return res
 
