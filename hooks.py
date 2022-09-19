@@ -89,10 +89,10 @@ class SigmoidBackwardHook(BackwardHook):
         self.name = "Sigmoid"
 
     def update_gradient(self, grad):
-        t = self.tensors[0]
-        back_grad = grad * self.derivative(t)
+        input_t, output_t = self.tensors[0], self.tensors[1]
+        back_grad = grad * self.derivative(output_t)
 
-        self.tensors[0].backward(back_grad)
+        input_t.backward(back_grad)
 
     @staticmethod
     def sigmoid(x):
@@ -101,8 +101,32 @@ class SigmoidBackwardHook(BackwardHook):
 
     def derivative(self, x_tensor):
         one = np.ones(shape=x_tensor.data.shape)
-        x_tensor.data = (one - self.sigmoid(x_tensor.data))*self.sigmoid(x_tensor.data)
-        x_tensor.data = np.matrix(x_tensor.data)
+        new_data = (one - self.sigmoid(x_tensor.data))*self.sigmoid(x_tensor.data)
+        x_tensor.data = np.matrix(new_data)
+
+        t = np.array(x_tensor.data)
+        new_data1 = np.exp((-1.0)*t**2) / (one + np.exp((-1.0)*t**2))**2
+        x_tensor.data = np.matrix(new_data1)
+        return x_tensor
+
+    def get_delta(self):
+        pass
+
+
+class SinBackwardHook(BackwardHook):
+    def __init__(self, *kargs, **kwargs):
+        super().__init__(*kargs, **kwargs)
+        self.name = "Sin"
+
+    def update_gradient(self, grad):
+        input_t, output_t = self.tensors[0], self.tensors[1]
+        back_grad = grad * self.derivative(output_t)
+
+        input_t.backward(back_grad)
+
+    def derivative(self, x_tensor):
+        new_data = np.cos(x_tensor.data)
+        x_tensor.data = np.matrix(new_data)
 
         return x_tensor
 
@@ -116,10 +140,10 @@ class ReLUBackwardHook(BackwardHook):
         self.name = "Sigmoid"
 
     def update_gradient(self, grad):
-        t = self.tensors[0]
-        back_grad = grad * self.derivative(t)
+        input_t, output_t = self.tensors[0], self.tensors[1]
+        back_grad = grad * self.derivative(input_t)
 
-        self.tensors[0].backward(back_grad)
+        input_t.backward(back_grad)
 
     def derivative(self, x_tensor):
         data = np.array(x_tensor.data)
