@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Optimizer:
     def __init__(self, parameters, lr=0.01):
         self.parameters = parameters
@@ -35,5 +38,13 @@ class Adam(Optimizer):
         self.eps = eps
 
     def step(self):
-        # ToDo
-        pass
+        for parameter in self.parameters:
+            grad = np.array(parameter.grad.data)
+
+            v_next_data = self.betas[0] * parameter.v_prev + (1.0 - self.betas[0]) * grad
+            g_next_data = self.betas[1] * parameter.g_prev + (1.0 - self.betas[1]) * grad**2
+
+            parameter.v_prev = v_next_data
+            parameter.g_prev = g_next_data
+
+            parameter.data -= self.lr * v_next_data / (g_next_data + self.eps)**0.5
