@@ -137,10 +137,10 @@ class SinBackwardHook(BackwardHook):
 class ReLUBackwardHook(BackwardHook):
     def __init__(self, *kargs, **kwargs):
         super().__init__(*kargs, **kwargs)
-        self.name = "Sigmoid"
+        self.name = "ReLU"
 
     def update_gradient(self, grad):
-        input_t, output_t = self.tensors[0], self.tensors[1]
+        input_t = self.tensors[0]
         back_grad = grad * self.derivative(input_t)
 
         input_t.backward(back_grad)
@@ -169,9 +169,34 @@ class ReLUBackwardHook(BackwardHook):
 
 
 class LeakyReLUBackwardHook(BackwardHook):
-    def update_gradient(self, delta):
-        #ToDo
-        pass
+    def __init__(self, *kargs, **kwargs):
+        super().__init__(*kargs, **kwargs)
+        self.negative_slope = None
+        self.name = "LeakyReLU"
+
+    def update_gradient(self, grad):
+        input_t = self.tensors[0]
+        back_grad = grad * self.derivative(input_t)
+
+        input_t.backward(back_grad)
+
+    def derivative(self, x_tensor):
+        data = np.array(x_tensor.data)
+        self.apply(self.relu_derivative, data)
+        x_tensor.data = np.matrix(data)
+        return x_tensor
+
+    @staticmethod
+    def apply(function, array):
+        h, w = array.shape
+        for i in range(h):
+            for j in range(w):
+                array[i][j] = function(array[i][j])
+
+    def relu_derivative(self, t):
+        if t >= 0:
+            return 1.0
+        return self.negative_slope
 
     def get_delta(self):
         pass
