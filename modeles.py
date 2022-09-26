@@ -1,7 +1,7 @@
 from tensor import Tensor, Parameter
 from math import sqrt
 import numpy as np
-from hooks import SigmoidBackwardHook, ReLUBackwardHook, SinBackwardHook
+from hooks import ReLUBackwardHook, LeakyReLUBackwardHook
 
 
 class Module:
@@ -84,7 +84,7 @@ class LeakyReLU(Module):
         new_data = np.array(x.data)
         self.apply(self.activation, new_data)
         res = Tensor(data=new_data)
-        backward_hook = ReLUBackwardHook(tensors=[x])
+        backward_hook = LeakyReLUBackwardHook(tensors=[x])
         backward_hook.negative_slope = self.negative_slope
         res.backward_hook = backward_hook
         return res
